@@ -27,7 +27,7 @@ public class UserController {
     }
 
     @PostMapping
-    public User createUser(@Valid @RequestBody User user) throws UserLoginWithoutSpace {
+    public User createUser(@Valid @RequestBody User user) {
         if (validate(user)) {
             if (user.getName() == null || user.getName().isBlank()) {
                 user.setName(user.getLogin());
@@ -42,22 +42,8 @@ public class UserController {
         return user;
     }
 
-//    @PutMapping
-//    public User put(@Valid @RequestBody User user) throws UserLoginWithoutSpace {
-//        if(userStorage.getUsers().contains(user)) {
-//            if(validate(user)) {
-//                userStorage.updateUser(user);
-//                log.info("Обновлён объект пользователь: " + user);
-//
-//            }
-//        } else {
-//            log.debug("Невозможно обновить данные пользователя, с id: " + user.getId() + " пользователь не найден.");
-//        }
-//        return user;
-//    }
-
     @PutMapping
-    public User put(@Valid @RequestBody User user) throws UserLoginWithoutSpace {
+    public User put(@Valid @RequestBody User user) {
         if (!userStorage.getUsers().contains(user)) {
             log.debug("Невозможно обновить данные пользователя, с id: " + user.getId() + " пользователь не найден.");
             throw new ValidationException("Невозможно обновить данные пользователя. Пользователь с id: " + user.getId()
@@ -71,19 +57,17 @@ public class UserController {
         return user;
     }
 
-
-    private boolean validate(User user) throws UserLoginWithoutSpace {
-
+    private boolean validate(User user) {
         if (user.getBirthday().isAfter(LocalDate.now())) {
             log.debug("Дата рождения указана в будущем времени.");
-            throw new UserIncorrectBirthday("Дата рождения не может быть в будущем.");
+            throw new ValidationException("Дата рождения не может быть в будущем.");
         }
         String login = user.getLogin();
         Pattern pattern = Pattern.compile("\\s");
         Matcher matcher = pattern.matcher(login);
         if (matcher.find()) {
             log.debug("Логин содержит пробелы");
-            throw new UserLoginWithoutSpace("Логин не может содержать пробелы");
+            throw new ValidationException("Логин не может содержать пробелы");
         }
         return true;
     }

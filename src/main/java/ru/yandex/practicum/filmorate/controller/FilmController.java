@@ -35,34 +35,20 @@ public class FilmController {
         return film;
     }
 
-//    @PutMapping
-//    public Film put(@Valid @RequestBody Film film) {
-//        if(filmStorage.getFilms().contains(film)) {
-//            if(validate(film)) {
-//                filmStorage.updateFilm(film);
-//                log.info("Обновлён объект фильм: " + film);
-//            }
-//        } else {
-//            createFilm(film);
-//        }
-//        return film;
-//    }
-
     @PutMapping
     public Film put(@Valid @RequestBody Film film) {
-        if(!filmStorage.getFilms().contains(film)) {
+        if (!filmStorage.getFilms().contains(film)) {
             log.debug("Невозможно обновить данные фильма, с id: " + film.getId() + " пользователь не найден.");
             throw new ValidationException("Невозможно обновить данные фильма. Фильма с id: " + film.getId()
                     + "  не найден.");
         } else {
-            if(validate(film)) {
+            if (validate(film)) {
                 filmStorage.updateFilm(film);
                 log.info("Обновлён объект фильм: " + film);
             }
         }
         return film;
     }
-
 
     private boolean validate(Film film) {
         if (film.getDescription().length() > 200) {
