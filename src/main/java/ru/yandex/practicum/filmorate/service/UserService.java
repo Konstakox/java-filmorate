@@ -25,7 +25,7 @@ public class UserService {
     @Autowired
     private UserStorage userStorage;
 
-    private final static Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
+    private final static Pattern PatternWhitespace = Pattern.compile("\\s");
 
     public List<User> findAll() {
         return userStorage.getUsers();
@@ -75,7 +75,7 @@ public class UserService {
             log.debug("Дата рождения указана в будущем времени.");
             throw new ValidationException("Дата рождения не может быть в будущем.");
         }
-        Matcher matcher = PATTERN_WHITESPACE.matcher(user.getLogin());
+        Matcher matcher = PatternWhitespace.matcher(user.getLogin());
         if (matcher.find()) {
             log.debug("Логин содержит пробелы");
             throw new ValidationException("Логин не может содержать пробелы");
