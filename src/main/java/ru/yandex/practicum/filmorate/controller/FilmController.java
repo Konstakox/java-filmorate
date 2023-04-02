@@ -1,69 +1,95 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.Storage.FilmStorage;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.IncorrectCountException;
+import ru.yandex.practicum.filmorate.exception.IncorrectIdException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.Month;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @Slf4j
+@Data
 @RequestMapping("/films")
 public class FilmController {
-    public final static int MAX_NUMBER_OF_CHARACTERS = 200;
-    public final static LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, Month.DECEMBER, 28);
-    public final static int MIN_DURATION_FILM = 0;
-    private final FilmStorage filmStorage = new FilmStorage();
+    @Autowired
+    private FilmService filmService;
 
     @GetMapping
     public List<Film> findAll() {
-        return filmStorage.getFilms();
+        return filmService.findAll();
     }
+
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable int id) {
+        Optional<Film> optionalFilm = Optional.ofNullable(filmService.getFilmById(id));
+        if (optionalFilm.isEmpty()) {
+            throw new IncorrectIdException("Fail getFilmById. Нет фильма с id: " + id);
+        }
+        return filmService.getFilmById(id);
+    }
+
 
     @PostMapping
     public Film createFilm(@Valid @RequestBody Film film) {
-        validate(film);
-        int id = filmStorage.getNextId();
-        film.setId(id);
-        filmStorage.setNextId(film.getId() + 1);
-        log.info("Счетчик id увеличился, следующий номер: " + filmStorage.getNextId());
-        filmStorage.addFilm(film.getId(), film);
-        log.info("Создан объект фильм: " + film);
-        return film;
+        return filmService.createFilm(film);
     }
 
     @PutMapping
     public Film put(@Valid @RequestBody Film film) {
-        if (!filmStorage.getFilms().contains(film)) {
-            log.debug("Невозможно обновить данные фильма, с id: " + film.getId() + " пользователь не найден.");
-            throw new ValidationException("Невозможно обновить данные фильма. Фильма с id: " + film.getId()
-                    + "  не найден.");
-        }
-        validate(film);
-        filmStorage.updateFilm(film);
-        log.info("Обновлён объект фильм: " + film);
-
-        return film;
+        return filmService.updateFilm(film);
     }
 
-    public void validate(Film film) {
-        if (film.getDescription().length() > MAX_NUMBER_OF_CHARACTERS) {
-            log.debug("Описание более " + MAX_NUMBER_OF_CHARACTERS + " символов");
-            throw new ValidationException("Превышено максимальное количество символов: " + MAX_NUMBER_OF_CHARACTERS);
+    @PutMapping("/{id}/like/{userId}")
+    public void addLike(@PathVariable Integer id, @PathVariable Integer userId) {
+        if (id == null || userId == null) {
+            System.out.println("Отсутствует ID");
+        } else {
+            filmService.addLike(id, userId);
         }
-        if (film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
-            log.debug("Дата релиза фильма раньше " + MIN_RELEASE_DATE);
-            throw new ValidationException("Дата релиза фильма раньше " + MIN_RELEASE_DATE);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public void deleteLike(@PathVariable Integer id, @PathVariable Integer userId) {
+        if (id == null || userId == null) {
+            System.out.println("Отсутствует ID");
+        } else {
+            filmService.deleteLike(id, userId);
         }
-        if (film.getDuration() <= MIN_DURATION_FILM) {
-            log.debug("Продолжительность фильма в минутах должна быть больше: " + MIN_DURATION_FILM);
-            throw new ru.yandex.practicum.filmorate.exception.ValidationException("Продолжительность фильма в минутах должна быть больше: " + MIN_DURATION_FILM);
+    }
+
+    @GetMapping("/popular")
+    public List<Film> sortingByMaxLikes(@RequestParam(defaultValue = "10", required = false) Integer count) {
+        if (count <= 0) {
+            throw new IncorrectCountException("Для рейтинга нужно количество выбранных фильмов больше 0. Вы указали: "
+                    + count);
+//            System.out.println("Для рейтинга нужно количество выбранных фильмов больше 0. Вы указали: " + count);
         }
+        return filmService.sortingByMaxLikes(count);
+    }
+
+    @ExceptionHandler
+    public Map<String, String> handle(final IncorrectCountException e) {
+        return Map.of(
+                "error", "Ошибка с параметром count.",
+                "errorMessage", e.getMessage()
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.NOT_FOUND)
+    public Map<String, String> filmHandleIncorrectId(final IncorrectIdException e) {
+        return Map.of(
+                "error", "Передан некорректный Id.",
+                "error ", e.getMessage()
+        );
     }
 }
