@@ -1,68 +1,91 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.Storage.UserStorage;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.IncorrectIdException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @Slf4j
+//@RequiredArgsConstructor
+@Data
 @RequestMapping("/users")
 public class UserController {
-    private final static Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
-    private final UserStorage userStorage = new UserStorage();
+    @Autowired
+    private UserService userService;
 
     @GetMapping
     public List<User> findAll() {
-        return userStorage.getUsers();
+        return userService.findAll();
     }
 
     @PostMapping
-    public User createUser(@Valid @RequestBody User user) {
-        validate(user);
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        int id = userStorage.getNextId();
-        user.setId(id);
-        userStorage.setNextId(user.getId() + 1);
-        log.info("Счетчик id увеличился, следующий номер: " + userStorage.getNextId());
-        userStorage.addUser(user.getId(), user);
-        log.info("Создан объект пользователь: " + user);
-
+    public User addUser(@Valid @RequestBody User user) {
+        userService.addUser(user);
         return user;
     }
 
     @PutMapping
-    public User put(@Valid @RequestBody User user) {
-        if (!userStorage.getUsers().contains(user)) {
-            log.debug("Невозможно обновить данные пользователя, с id: " + user.getId() + " пользователь не найден.");
-            throw new ValidationException("Невозможно обновить данные пользователя. Пользователь с id: " + user.getId()
-                    + "  не найден.");
-        }
-        validate(user);
-        userStorage.updateUser(user);
-        log.info("Обновлён объект пользователь: " + user);
-
-        return user;
+    public User updateUser(@Valid @RequestBody User user) {
+        return userService.updateUser(user);
     }
 
-    public void validate(User user) {
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            log.debug("Дата рождения указана в будущем времени.");
-            throw new ValidationException("Дата рождения не может быть в будущем.");
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable int id) {
+        Optional<User> optionalUser = Optional.ofNullable(userService.getUserById(id));
+        if (optionalUser.isEmpty()) {
+            throw new IncorrectIdException("Fail getUserId. Нет пользователя с id: " + id);
         }
-        Matcher matcher = PATTERN_WHITESPACE.matcher(user.getLogin());
-        if (matcher.find()) {
-            log.debug("Логин содержит пробелы");
-            throw new ValidationException("Логин не может содержать пробелы");
+
+        return userService.getUserById(id);
+    }
+
+    @PutMapping("/{id}/friends/{friendId}")
+    public void addFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
+        if (id == null || friendId == null) {
+            throw new IncorrectIdException("Fail addFriend. Нет пользователя с id: " + id + " или " + friendId);
         }
+        if (id < 0 || friendId < 0) {
+            throw new IncorrectIdException("Fail addFriend. Отрицательный id: " + id + " или " + friendId);
+        } else {
+            userService.addFriend(id, friendId);
+        }
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void deleteFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
+        if (id == null || friendId == null) {
+            throw new IncorrectIdException("Fail deleteFriend. Не введен id: ");
+        } else {
+            userService.deleteFriend(id, friendId);
+        }
+    }
+
+    @GetMapping("/{id}/friends")
+    public List<User> getFriends(@PathVariable int id) {
+        return userService.getFriends(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> getMutualFriends(@PathVariable int id, @PathVariable int otherId) {
+        return userService.getMutualFriends(id, otherId);
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(code = HttpStatus.NOT_FOUND)
+    public Map<String, String> handleIncorrectId(final IncorrectIdException e) {
+        return Map.of(
+                "error", "Передан некорректный Id.",
+                "error ", e.getMessage()
+        );
     }
 }

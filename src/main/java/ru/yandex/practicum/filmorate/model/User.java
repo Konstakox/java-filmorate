@@ -1,15 +1,15 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.NonNull;
+import lombok.*;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
-import java.util.Objects;
+import java.util.*;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @NonNull
 public class User {
@@ -20,6 +20,15 @@ public class User {
     private String login;           //логин пользователя
     private String name;            //имя для отображения
     private LocalDate birthday;     //дата рождения
+    private Set<Integer> friends = new HashSet<>();      //id друзей
+
+    public void addFriends(Integer id) {
+        friends.add(id);
+    }
+
+    public void deleteFriend(Integer id) {
+            friends.remove(id);
+        }
 
     @Override
     public boolean equals(Object o) {
