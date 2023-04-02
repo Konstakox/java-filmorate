@@ -25,7 +25,7 @@ public class UserService {
     @Autowired
     private UserStorage userStorage;
 
-    private final Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
+    private static final Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
 
     public List<User> findAll() {
         return userStorage.getUsers();

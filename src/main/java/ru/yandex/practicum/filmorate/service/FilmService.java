@@ -25,9 +25,9 @@ public class FilmService {
     private FilmStorage filmStorage;
     @Autowired
     private UserService userService;
-    public final int MAX_NUMBER_OF_CHARACTERS = 200;
-    public final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, Month.DECEMBER, 28);
-    public final int MIN_DURATION_FILM = 0;
+    private static final int MAX_NUMBER_OF_CHARACTERS = 200;
+    private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, Month.DECEMBER, 28);
+    private static final int MIN_DURATION_FILM = 0;
 
     public List<Film> findAll() {
         return filmStorage.getFilms();
