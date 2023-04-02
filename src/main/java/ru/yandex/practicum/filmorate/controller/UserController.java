@@ -20,7 +20,7 @@ import java.util.Optional;
 @Data
 @RequestMapping("/users")
 public class UserController {
-@Autowired
+    @Autowired
     private UserService userService;
 
     @GetMapping
@@ -47,17 +47,16 @@ public class UserController {
         }
 
         return userService.getUserById(id);
-    };
+    }
 
     @PutMapping("/{id}/friends/{friendId}")
     public void addFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
         if (id == null || friendId == null) {
-            throw new IncorrectIdException("Fail addFriend. Нет пользователя с id: " + id + " или " +friendId);
+            throw new IncorrectIdException("Fail addFriend. Нет пользователя с id: " + id + " или " + friendId);
         }
         if (id < 0 || friendId < 0) {
-            throw new IncorrectIdException("Fail addFriend. Отрицательный id: " + id + " или " +friendId);
-        }
-        else {
+            throw new IncorrectIdException("Fail addFriend. Отрицательный id: " + id + " или " + friendId);
+        } else {
             userService.addFriend(id, friendId);
         }
     }
@@ -74,12 +73,12 @@ public class UserController {
     @GetMapping("/{id}/friends")
     public List<User> getFriends(@PathVariable int id) {
         return userService.getFriends(id);
-    };
+    }
 
     @GetMapping("/{id}/friends/common/{otherId}")
     public List<User> getMutualFriends(@PathVariable int id, @PathVariable int otherId) {
         return userService.getMutualFriends(id, otherId);
-    };
+    }
 
     @ExceptionHandler
     @ResponseStatus(code = HttpStatus.NOT_FOUND)
