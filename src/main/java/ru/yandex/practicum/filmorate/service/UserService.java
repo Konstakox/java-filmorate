@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import ru.yandex.practicum.filmorate.Storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -25,7 +25,7 @@ public class UserService {
     @Autowired
     private UserStorage userStorage;
 
-    private final Pattern patternWhitespace = Pattern.compile("\\s");
+    private final Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
 
     public List<User> findAll() {
         return userStorage.getUsers();
@@ -75,7 +75,7 @@ public class UserService {
             log.debug("Дата рождения указана в будущем времени.");
             throw new ValidationException("Дата рождения не может быть в будущем.");
         }
-        Matcher matcher = patternWhitespace.matcher(user.getLogin());
+        Matcher matcher = PATTERN_WHITESPACE.matcher(user.getLogin());
         if (matcher.find()) {
             log.debug("Логин содержит пробелы");
             throw new ValidationException("Логин не может содержать пробелы");

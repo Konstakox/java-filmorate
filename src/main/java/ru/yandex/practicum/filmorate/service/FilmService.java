@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.Storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.exception.IncorrectIdException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -25,9 +25,9 @@ public class FilmService {
     private FilmStorage filmStorage;
     @Autowired
     private UserService userService;
-    public final int maxNumberOfCharacters = 200;
-    public final LocalDate minReleaseDate = LocalDate.of(1895, Month.DECEMBER, 28);
-    public final int minDurationFilm = 0;
+    public final int MAX_NUMBER_OF_CHARACTERS = 200;
+    public final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, Month.DECEMBER, 28);
+    public final int MIN_DURATION_FILM = 0;
 
     public List<Film> findAll() {
         return filmStorage.getFilms();
@@ -74,17 +74,17 @@ public class FilmService {
 
 
     public void validate(Film film) {
-        if (film.getDescription().length() > maxNumberOfCharacters) {
-            log.debug("Описание более " + maxNumberOfCharacters + " символов");
-            throw new ValidationException("Превышено максимальное количество символов: " + maxNumberOfCharacters);
+        if (film.getDescription().length() > MAX_NUMBER_OF_CHARACTERS) {
+            log.debug("Описание более " + MAX_NUMBER_OF_CHARACTERS + " символов");
+            throw new ValidationException("Превышено максимальное количество символов: " + MAX_NUMBER_OF_CHARACTERS);
         }
-        if (film.getReleaseDate().isBefore(minReleaseDate)) {
-            log.debug("Дата релиза фильма раньше " + minReleaseDate);
-            throw new ValidationException("Дата релиза фильма раньше " + minReleaseDate);
+        if (film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
+            log.debug("Дата релиза фильма раньше " + MIN_RELEASE_DATE);
+            throw new ValidationException("Дата релиза фильма раньше " + MIN_RELEASE_DATE);
         }
-        if (film.getDuration() <= minDurationFilm) {
-            log.debug("Продолжительность фильма в минутах должна быть больше: " + minDurationFilm);
-            throw new ValidationException("Продолжительность фильма в минутах должна быть больше: " + minDurationFilm);
+        if (film.getDuration() <= MIN_DURATION_FILM) {
+            log.debug("Продолжительность фильма в минутах должна быть больше: " + MIN_DURATION_FILM);
+            throw new ValidationException("Продолжительность фильма в минутах должна быть больше: " + MIN_DURATION_FILM);
         }
     }
 }
