@@ -5,6 +5,7 @@ import lombok.*;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -22,6 +23,8 @@ public class Film {
     private int duration;               //продолжительность фильма
     private int like;                   //количество лайков, в задании определено как рейтинг
     private Set<Integer> userLike = new HashSet<>();      //id кто поставил лайк
+    private List<Genre> genre;                            //жанр
+    private MotionPictureAssociation mpa;                 //возрастное ограничение для фильма
 
     public boolean addLike(Integer userId) {
         return userLike.add(userId);
