@@ -8,12 +8,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class Genre {
+public class Mpa {
 
     private int id;
     private String name;
-
-    public Genre(int id) {
-        this.id = id;
-    }
 }

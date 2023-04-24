@@ -5,15 +5,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,10 +26,10 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 @Data
 public class UserService {
-    @Autowired
-    private UserStorage userStorage;
-
     private static final Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
+    @Autowired
+    private final UserStorage userStorage;
+    private final JdbcTemplate jdbcTemplate;
 
     public List<User> findAll() {
         return userStorage.getUsers();
@@ -33,41 +37,47 @@ public class UserService {
 
     public User addUser(User user) {
         validate(user);
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
         return userStorage.addUser(user);
     }
 
     public User updateUser(User user) {
+        validate(user);
+        isExistUserById(user.getId());
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
         return userStorage.updateUser(user);
     }
 
     public User getUserById(int id) {
+        isExistUserById(id);
         return userStorage.getUser(id);
     }
 
     public void addFriend(Integer id, Integer friendId) {
-        userStorage.getUser(id).addFriends(friendId);
-        userStorage.getUser(friendId).addFriends(id);
+        isExistUserById(id);
+        isExistUserById(friendId);
+        userStorage.addFriend(id, friendId);
     }
 
     public void deleteFriend(Integer id, Integer friendId) {
-        userStorage.getUser(id).deleteFriend(friendId);
-        userStorage.getUser(friendId).deleteFriend(id);
+        isExistUserById(id);
+        isExistUserById(friendId);
+        userStorage.deleteFriend(id, friendId);
     }
 
     public List<User> getFriends(Integer id) {
-        Set<Integer> friendsId = userStorage.getUser(id).getFriends();
-        List<User> friendsUser = new ArrayList<>();
-        for (Integer item : friendsId) {
-            friendsUser.add(userStorage.getUser(item));
-        }
-        return friendsUser;
+        isExistUserById(id);
+        return userStorage.getFriends(id);
     }
 
     public List<User> getMutualFriends(Integer id, Integer otherId) {
-        List<User> friendsId = getFriends(id);
-        List<User> friendsOtherId = getFriends(otherId);
-        friendsId.retainAll(friendsOtherId);
-        return friendsId;
+        isExistUserById(id);
+        isExistUserById(otherId);
+        return userStorage.getMutualFriends(id, otherId);
     }
 
     public void validate(User user) {
@@ -79,6 +89,13 @@ public class UserService {
         if (matcher.find()) {
             log.debug("Логин содержит пробелы");
             throw new ValidationException("Логин не может содержать пробелы");
+        }
+    }
+
+    private void isExistUserById(int id) {
+        SqlRowSet userRows = jdbcTemplate.queryForRowSet("SELECT* FROM users WHERE user_id = ?", id);
+        if (!userRows.next()) {
+            throw new UserNotFoundException("Нет пользователя с id: " + id);
         }
     }
 

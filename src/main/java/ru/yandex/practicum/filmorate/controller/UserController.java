@@ -12,11 +12,9 @@ import ru.yandex.practicum.filmorate.service.UserService;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @Slf4j
-//@RequiredArgsConstructor
 @Data
 @RequestMapping("/users")
 public class UserController {
@@ -41,11 +39,6 @@ public class UserController {
 
     @GetMapping("/{id}")
     public User getUserById(@PathVariable int id) {
-        Optional<User> optionalUser = Optional.ofNullable(userService.getUserById(id));
-        if (optionalUser.isEmpty()) {
-            throw new IncorrectIdException("Fail getUserId. Нет пользователя с id: " + id);
-        }
-
         return userService.getUserById(id);
     }
 

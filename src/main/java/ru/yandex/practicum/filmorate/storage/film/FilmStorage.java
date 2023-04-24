@@ -18,4 +18,6 @@ public interface FilmStorage {
     void addLike(Integer id, Integer userId);
 
     void deleteLike(Integer id, Integer userId);
+
+    List<Film> sortingByMaxLikes(Integer count);
 }

@@ -13,7 +13,6 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @Slf4j
@@ -30,10 +29,6 @@ public class FilmController {
 
     @GetMapping("/{id}")
     public Film getFilmById(@PathVariable int id) {
-        Optional<Film> optionalFilm = Optional.ofNullable(filmService.getFilmById(id));
-        if (optionalFilm.isEmpty()) {
-            throw new IncorrectIdException("Fail getFilmById. Нет фильма с id: " + id);
-        }
         return filmService.getFilmById(id);
     }
 
@@ -44,7 +39,7 @@ public class FilmController {
     }
 
     @PutMapping
-    public Film put(@Valid @RequestBody Film film) {
+    public Film updateFilm(@Valid @RequestBody Film film) {
         return filmService.updateFilm(film);
     }
 
@@ -71,7 +66,6 @@ public class FilmController {
         if (count <= 0) {
             throw new IncorrectCountException("Для рейтинга нужно количество выбранных фильмов больше 0. Вы указали: "
                     + count);
-//            System.out.println("Для рейтинга нужно количество выбранных фильмов больше 0. Вы указали: " + count);
         }
         return filmService.sortingByMaxLikes(count);
     }

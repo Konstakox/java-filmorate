@@ -1,39 +1,29 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
 @Builder
-@NonNull
 public class Film {
     private int id;                     //целочисленный идентификатор
     @NotBlank
-    private String name;                //название
+    private String name;                //название film_name
     private String description;         //описание
     private LocalDate releaseDate;      //дата релиза
     private int duration;               //продолжительность фильма
-    private int like;                   //количество лайков, в задании определено как рейтинг
-    private Set<Integer> userLike = new HashSet<>();      //id кто поставил лайк
-    private List<Genre> genre;                            //жанр
-    private MotionPictureAssociation mpa;                 //возрастное ограничение для фильма
+    private Mpa mpa;                 //возрастное ограничение для фильма
+    private List<Genre> genres;                            //жанр
 
-    public boolean addLike(Integer userId) {
-        return userLike.add(userId);
+    public Film() {
     }
-
-    public boolean deleteLike(Integer userId) {
-        return userLike.remove(userId);
-    }
-
 
     @Override
     public boolean equals(Object o) {
