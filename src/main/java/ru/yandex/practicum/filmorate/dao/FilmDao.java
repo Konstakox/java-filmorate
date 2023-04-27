@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage.film;
+package ru.yandex.practicum.filmorate.dao;
 
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -6,7 +6,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.util.List;
 
 @Component
-public interface FilmStorage {
+public interface FilmDao {
     List<Film> getFilms();
 
     Film addFilm(Film film);
@@ -18,4 +18,6 @@ public interface FilmStorage {
     void addLike(Integer id, Integer userId);
 
     void deleteLike(Integer id, Integer userId);
+
+    List<Film> sortingByMaxLikes(Integer count);
 }
