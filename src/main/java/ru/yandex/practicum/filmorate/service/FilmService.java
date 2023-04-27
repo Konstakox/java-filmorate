@@ -3,17 +3,16 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.FilmDao;
 import ru.yandex.practicum.filmorate.dao.GenreDao;
 import ru.yandex.practicum.filmorate.exception.IncorrectIdException;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -29,23 +28,21 @@ public class FilmService {
     private static final int MIN_DURATION_FILM = 0;
     private final JdbcTemplate jdbcTemplate;
     private final GenreDao genreDao;
-    @Autowired
-    private FilmStorage filmStorage;
-    @Autowired
-    private UserService userService;
+    private final FilmDao filmDao;
+    private final UserService userService;
 
     public List<Film> findAll() {
-        return filmStorage.getFilms();
+        return filmDao.getFilms();
     }
 
     public Film getFilmById(int id) {
         isExistFilmById(id);
-        return filmStorage.getFilmById(id);
+        return filmDao.getFilmById(id);
     }
 
     public Film createFilm(Film film) {
         validate(film);
-        return filmStorage.addFilm(film);
+        return filmDao.addFilm(film);
     }
 
     public Film updateFilm(Film film) {
@@ -54,25 +51,25 @@ public class FilmService {
         genreDao.delete(film.getId());
         List<Genre> filmGenres = genreDao.add(film.getId(), film.getGenres());
         film.setGenres(filmGenres);
-        return filmStorage.updateFilm(film);
+        return filmDao.updateFilm(film);
     }
 
     public void addLike(Integer id, Integer userId) {
         if (userService.getUserById(userId) == null) {
             throw new IncorrectIdException("No ID");
         }
-        filmStorage.addLike(id, userId);
+        filmDao.addLike(id, userId);
     }
 
     public void deleteLike(Integer id, Integer userId) {
         if (userService.getUserById(userId) == null) {
             throw new IncorrectIdException("No ID");
         }
-        filmStorage.deleteLike(id, userId);
+        filmDao.deleteLike(id, userId);
     }
 
     public List<Film> sortingByMaxLikes(Integer count) {
-        return filmStorage.sortingByMaxLikes(count);
+        return filmDao.sortingByMaxLikes(count);
     }
 
     public void validate(Film film) {

@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
@@ -10,8 +8,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Data
-@AllArgsConstructor
-@Builder
+@RequiredArgsConstructor
 public class Film {
     private int id;                     //целочисленный идентификатор
     @NotBlank
@@ -21,9 +18,6 @@ public class Film {
     private int duration;               //продолжительность фильма
     private Mpa mpa;                 //возрастное ограничение для фильма
     private List<Genre> genres;                            //жанр
-
-    public Film() {
-    }
 
     @Override
     public boolean equals(Object o) {

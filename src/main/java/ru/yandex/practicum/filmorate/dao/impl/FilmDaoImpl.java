@@ -6,13 +6,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.dao.GenreDao;
-import ru.yandex.practicum.filmorate.dao.MpaDao;
+import ru.yandex.practicum.filmorate.dao.FilmDao;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -22,12 +20,10 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-public class FilmDbStorage implements FilmStorage {
+public class FilmDaoImpl implements FilmDao {
 
     private final JdbcTemplate jdbcTemplate;
     private final FilmMapper filmMapper;
-    private final MpaDao mpaDao;
-    private final GenreDao genreDao;
 
     @Override
     public List<Film> getFilms() {
@@ -85,7 +81,6 @@ public class FilmDbStorage implements FilmStorage {
                         ps.setInt(1, filmId);
                         ps.setInt(2, genreList.get(i).getId());
                     }
-
                     public int getBatchSize() {
                         return genreList.size();
                     }
@@ -99,9 +94,20 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film getFilmById(int id) {
-        String sqlQuery = "SELECT* FROM films WHERE film_id=?";
-        return jdbcTemplate.query(sqlQuery, new FilmMapper(mpaDao, genreDao), id).stream().findFirst()
-                .orElseThrow(() -> new ObjectNotFoundException("Фильм не найден"));
+        String sqlQuery = "SELECT f.FILM_NAME, DESCRIPTION, RELEASE_DATE, DURATION, f.FILM_ID, g.GENRE_ID, g.GENRE_NAME, m.MPA_ID, m.MPA_NAME " +
+                "FROM films f " +
+                "LEFT JOIN MPA m ON f.MPA_ID = m.MPA_ID " +
+                "LEFT JOIN FILM_GENRE fg ON f.FILM_ID = fg.FILM_ID " +
+                "LEFT JOIN GENRES g ON fg.GENRE_ID = g.GENRE_ID " +
+                "WHERE f.film_id=?";
+
+        List<Film> films = jdbcTemplate.query(sqlQuery, filmMapper, id);
+
+        if (!films.isEmpty()) {
+            return setGenresToFilm(films).get(0);
+        } else {
+            throw new ObjectNotFoundException("Фильм не найден");
+        }
     }
 
     @Override
@@ -118,11 +124,39 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> sortingByMaxLikes(Integer count) {
-        String sql = "SELECT f.film_id, film_name, description, duration, release_date, mpa_id, count\n" +
-                "FROM (SELECT film_id ,COUNT(user_id) AS count\n" +
-                "FROM movie_likes AS ml\n" +
-                "GROUP BY film_id) AS likes RIGHT JOIN films AS f ON f.film_id=likes.film_id\n" +
-                "ORDER BY count LIMIT ?";
-        return new ArrayList<>(jdbcTemplate.query(sql, new FilmMapper(mpaDao, genreDao), count));
+        String sql = "WITH cte AS " +
+                "(SELECT f.FILM_ID, COUNT(user_id) rate " +
+                "FROM FILMS f " +
+                "LEFT JOIN MOVIE_LIKES ml ON f.FILM_ID = ml.FILM_ID GROUP BY f.FILM_ID ORDER BY rate DESC LIMIT ?) " +
+                "SELECT f.FILM_NAME, DESCRIPTION, RELEASE_DATE, DURATION, cte.rate, f.FILM_ID, " +
+                "m.MPA_ID, m.MPA_NAME, g.GENRE_ID, g.GENRE_NAME, l.USER_ID " +
+                "FROM FILMS f " +
+                "LEFT JOIN MPA m ON f.MPA_ID = m.MPA_ID " +
+                "LEFT JOIN FILM_GENRE fg ON f.FILM_ID = fg.FILM_ID " +
+                "LEFT JOIN GENRES g ON fg.GENRE_ID = g.GENRE_ID " +
+                "LEFT JOIN MOVIE_LIKES l ON f.FILM_ID = l.FILM_ID " +
+                "LEFT JOIN cte ON f.FILM_ID = cte.FILM_ID " +
+                "WHERE f.FILM_ID IN (SELECT FILM_ID FROM cte) " +
+                "ORDER BY rate DESC;";
+
+        List<Film> filmList = new ArrayList<>(jdbcTemplate.query(sql, filmMapper, count));
+
+        return setGenresToFilm(filmList);
+    }
+
+    private List<Film> setGenresToFilm(List<Film> filmList) {
+        List<Film> fixedFilmList = new ArrayList<>();
+
+        for (Film film : filmList) {
+            if (!fixedFilmList.contains(film)) {
+                fixedFilmList.add(film);
+            } else {
+                Film existedFilm = fixedFilmList.get(fixedFilmList.indexOf(film));
+                if (!film.getGenres().isEmpty()) {
+                    existedFilm.getGenres().add(film.getGenres().get(0));
+                }
+            }
+        }
+        return fixedFilmList;
     }
 }

@@ -3,34 +3,32 @@ package ru.yandex.practicum.filmorate.mapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.dao.GenreDao;
-import ru.yandex.practicum.filmorate.dao.MpaDao;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class FilmMapper implements RowMapper<Film> {
-
-    private final MpaDao mpaDao;
-    private final GenreDao genreDao;
 
     @Override
     public Film mapRow(ResultSet rs, int rowNum) throws SQLException {
-        int id = rs.getInt("FILM_ID");
-        String name = rs.getString("FILM_NAME");
-        String description = rs.getString("DESCRIPTION");
-        LocalDate releaseDate = rs.getDate("RELEASE_DATE").toLocalDate();
-        int duration = rs.getInt("DURATION");
-        Mpa mpa = mpaDao.get(rs.getInt("MPA_ID"));
-        List<Genre> genres = genreDao.getGenresListForFilm(rs.getInt("FILM_ID"));
+        Film film = new Film();
+        film.setId(rs.getInt("FILM_ID"));
+        film.setName(rs.getString("FILM_NAME"));
+        film.setDescription(rs.getString("DESCRIPTION"));
+        film.setReleaseDate(rs.getDate("RELEASE_DATE").toLocalDate());
+        film.setDuration(rs.getInt("DURATION"));
+        film.setMpa(new Mpa(rs.getInt("MPA_ID"), rs.getString("MPA_NAME")));
 
-        return rs.wasNull() ? null : new Film(id, name, description, releaseDate, duration, mpa, genres);
+        List<Genre> genres = new ArrayList<>();
+        genres.add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));
+        film.setGenres(genres);
+
+        return film;
     }
 }

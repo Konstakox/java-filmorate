@@ -4,20 +4,15 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import ru.yandex.practicum.filmorate.dao.UserDao;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,11 +23,11 @@ import java.util.regex.Pattern;
 public class UserService {
     private static final Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
     @Autowired
-    private final UserStorage userStorage;
+    private final UserDao userDao;
     private final JdbcTemplate jdbcTemplate;
 
     public List<User> findAll() {
-        return userStorage.getUsers();
+        return userDao.getUsers();
     }
 
     public User addUser(User user) {
@@ -40,7 +35,7 @@ public class UserService {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        return userStorage.addUser(user);
+        return userDao.addUser(user);
     }
 
     public User updateUser(User user) {
@@ -49,35 +44,35 @@ public class UserService {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        return userStorage.updateUser(user);
+        return userDao.updateUser(user);
     }
 
     public User getUserById(int id) {
         isExistUserById(id);
-        return userStorage.getUser(id);
+        return userDao.getUser(id);
     }
 
     public void addFriend(Integer id, Integer friendId) {
         isExistUserById(id);
         isExistUserById(friendId);
-        userStorage.addFriend(id, friendId);
+        userDao.addFriend(id, friendId);
     }
 
     public void deleteFriend(Integer id, Integer friendId) {
         isExistUserById(id);
         isExistUserById(friendId);
-        userStorage.deleteFriend(id, friendId);
+        userDao.deleteFriend(id, friendId);
     }
 
     public List<User> getFriends(Integer id) {
         isExistUserById(id);
-        return userStorage.getFriends(id);
+        return userDao.getFriends(id);
     }
 
     public List<User> getMutualFriends(Integer id, Integer otherId) {
         isExistUserById(id);
         isExistUserById(otherId);
-        return userStorage.getMutualFriends(id, otherId);
+        return userDao.getMutualFriends(id, otherId);
     }
 
     public void validate(User user) {
@@ -93,18 +88,9 @@ public class UserService {
     }
 
     private void isExistUserById(int id) {
-        SqlRowSet userRows = jdbcTemplate.queryForRowSet("SELECT* FROM users WHERE user_id = ?", id);
-        if (!userRows.next()) {
+        if (!userDao.isExistUserById(id)) {
             throw new UserNotFoundException("Нет пользователя с id: " + id);
         }
     }
 
-    @ExceptionHandler
-    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleIncorrectUser(final ValidationException e) {
-        return Map.of(
-                "error", "Некорректные данные пользователя.",
-                "error ", e.getMessage()
-        );
-    }
 }

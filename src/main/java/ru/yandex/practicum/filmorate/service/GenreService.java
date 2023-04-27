@@ -5,7 +5,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.GenreDao;
-import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.List;
@@ -18,9 +17,6 @@ public class GenreService {
     private final GenreDao genreDao;
 
     public Genre get(int id) {
-        if (!isExist(id)) {
-            throw new ObjectNotFoundException("Жанр не найден");
-        }
         return genreDao.get(id);
     }
 
