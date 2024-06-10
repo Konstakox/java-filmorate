@@ -5,7 +5,9 @@ import lombok.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -27,8 +29,8 @@ public class User {
     }
 
     public void deleteFriend(Integer id) {
-            friends.remove(id);
-        }
+        friends.remove(id);
+    }
 
     @Override
     public boolean equals(Object o) {
