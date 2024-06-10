@@ -27,7 +27,7 @@
 </ul></p>
 
 <h3>Схема базы данных</h3>
-<p><img src="https://github.com/Konstakox/java-filmorate/blob/main/vol1.png"/></p>
+<p><img src="https://github.com/Konstakox/java-filmorate/blob/main/PUBLIC.png"/></p>
 
 <!--
 # java-filmorate
